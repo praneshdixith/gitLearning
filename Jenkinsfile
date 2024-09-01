@@ -38,22 +38,19 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                // Activate virtual environment and install dependencies
-                sh """
-                source ${VENV_DIR}/bin/activate
-                pip install --upgrade pip
-                pip install -r requirements.txt
-                """
+                // Activate virtual environment and install dependencies using bash
+                sh '''
+                bash -c "source ${VENV_DIR}/bin/activate && pip install --upgrade pip && pip install -r requirements.txt"
+                '''
             }
         }
 
         stage('Run Tests') {
             steps {
-                // Activate virtual environment and run tests
-                sh """
-                source ${VENV_DIR}/bin/activate
-                python -m unittest discover
-                """
+                // Activate virtual environment and run tests using bash
+                sh '''
+                bash -c "source ${VENV_DIR}/bin/activate && python -m unittest discover"
+                '''
             }
         }
     }

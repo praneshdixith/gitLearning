@@ -2,68 +2,57 @@ from flask import Flask, jsonify, request, abort
 
 app = Flask(__name__)
 
-# Sample data
+app.config['TESTING'] = True
+
+# In-memory data store for books
 books = [
-    {'id': 1, 'title': '1984', 'author': 'George Orwell'},
-    {'id': 2, 'title': 'To Kill a Mockingbird', 'author': 'Harper Lee'},
-    {'id': 3, 'title': 'The Great Gatsby', 'author': 'F. Scott Fitzgerald'}
+    {'id': 1, 'title': '1984', 'author': 'George Orwell'}
 ]
 
-# Get all books
 @app.route('/books', methods=['GET'])
-def get_books():
-    return jsonify(books)
+def get_all_books():
+    print('Handling GET /books')  # Debugging line
+    return jsonify(books), 200
 
-# Get a single book by ID
 @app.route('/books/<int:book_id>', methods=['GET'])
 def get_book(book_id):
-    book = next((book for book in books if book['id'] == book_id), None)
+    print(f'Handling GET /books/{book_id}')  # Debugging line
+    book = next((b for b in books if b['id'] == book_id), None)
     if book is None:
-        abort(404)
-    return jsonify(book)
+        return jsonify({'error': 'Book not found'}), 404
+    return jsonify(book), 200
 
-# Create a new book
 @app.route('/books', methods=['POST'])
 def create_book():
-    if not request.json or not 'title' in request.json:
-        abort(400)
+    print('Handling POST /books')  # Debugging line
+    if not request.json or 'title' not in request.json or 'author' not in request.json:
+        return jsonify({'error': 'Bad request'}), 400
     new_book = {
-        'id': books[-1]['id'] + 1 if books else 1,
+        'id': len(books) + 1,
         'title': request.json['title'],
-        'author': request.json.get('author', "")
+        'author': request.json['author']
     }
     books.append(new_book)
     return jsonify(new_book), 201
 
-# Update an existing book
 @app.route('/books/<int:book_id>', methods=['PUT'])
 def update_book(book_id):
-    book = next((book for book in books if book['id'] == book_id), None)
+    print(f'Handling PUT /books/{book_id}')  # Debugging line
+    book = next((b for b in books if b['id'] == book_id), None)
     if book is None:
-        abort(404)
-    if not request.json:
-        abort(400)
-    book['title'] = request.json.get('title', book['title'])
-    book['author'] = request.json.get('author', book['author'])
-    return jsonify(book)
+        return jsonify({'error': 'Book not found'}), 404
+    if not request.json or 'title' not in request.json or 'author' not in request.json:
+        return jsonify({'error': 'Bad request'}), 400
+    book['title'] = request.json['title']
+    book['author'] = request.json['author']
+    return jsonify(book), 200
 
-# Delete a book
 @app.route('/books/<int:book_id>', methods=['DELETE'])
 def delete_book(book_id):
-    book = next((book for book in books if book['id'] == book_id), None)
-    if book is None:
-        abort(404)
-    books.remove(book)
+    print(f'Handling DELETE /books/{book_id}')  # Debugging line
+    global books
+    books = [b for b in books if b['id'] != book_id]
     return '', 204
-
-# Error handling
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({'error': 'Not found'}), 404
-
-@app.errorhandler(400)
-def bad_request(error):
-    return jsonify({'error': 'Bad request'}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         PYTHON_ENV = 'python3'
+        VENV_DIR = 'venv'
     }
 
     stages {
@@ -15,22 +16,29 @@ pipeline {
 
         stage('Set Up Python Environment') {
             steps {
-                // Install Python and pip
-                sh "${PYTHON_ENV} -m pip install --upgrade pip"
+                // Create a Python virtual environment
+                sh "${PYTHON_ENV} -m venv ${VENV_DIR}"
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                // Install dependencies from requirements.txt
-                sh "${PYTHON_ENV} -m pip install -r requirements.txt"
+                // Activate virtual environment and install dependencies
+                sh """
+                source ${VENV_DIR}/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
+                """
             }
         }
 
         stage('Run Tests') {
             steps {
-                // Run the unit tests
-                sh "${PYTHON_ENV} -m unittest discover"
+                // Activate virtual environment and run tests
+                sh """
+                source ${VENV_DIR}/bin/activate
+                python -m unittest discover
+                """
             }
         }
     }

@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'flask-api:latest'
+        PYTHON_ENV = 'python3'
     }
 
     stages {
@@ -13,33 +13,24 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Set Up Python Environment') {
             steps {
-                // Build Docker image using the Dockerfile
-                script {
-                    dockerImage = docker.build(DOCKER_IMAGE, '-f Dockerfile .')
-                }
+                // Install Python and pip
+                sh "${PYTHON_ENV} -m pip install --upgrade pip"
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                // Install dependencies from requirements.txt
+                sh "${PYTHON_ENV} -m pip install -r requirements.txt"
             }
         }
 
         stage('Run Tests') {
             steps {
-                // Run the unit tests inside the Docker container
-                script {
-                    dockerImage.inside {
-                        sh 'python -m unittest discover'
-                    }
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
-                        dockerImage.push('latest')
-                    }
-                }
+                // Run the unit tests
+                sh "${PYTHON_ENV} -m unittest discover"
             }
         }
     }
